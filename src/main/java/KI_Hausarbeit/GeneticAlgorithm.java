@@ -26,8 +26,8 @@ public class GeneticAlgorithm {
     private final Random random = new Random();
     private final SelectionType selectionType;
 
-    private long smallestCostAllRuns = Long.MAX_VALUE;
-    private long totalCostAllRuns = 0;
+    private double smallestCostAllRuns = Double.MAX_VALUE;
+    private double totalCostAllRuns = 0;
 
     public GeneticAlgorithm(CityNode[] nodes, int populationSize, int numOfGenerations, SelectionType selectionType, int mutationRate, MutationType mutationType, int elitistNumber, int recombinationRate) {
         this.nodes = nodes;
@@ -46,11 +46,11 @@ public class GeneticAlgorithm {
 
     public void reset() {
         algorithmData = new AlgorithmData(numOfGenerations);
-        smallestCostAllRuns = Long.MAX_VALUE;
+        smallestCostAllRuns = Double.MAX_VALUE;
         totalCostAllRuns = 0;
     }
 
-    public long getSmallestCostAllRuns() {
+    public double getSmallestCostAllRuns() {
         return smallestCostAllRuns;
     }
 
@@ -70,8 +70,8 @@ public class GeneticAlgorithm {
             }
         }
 
-        long smallestCost = bestPaths.get(0).getCost();
-        smallestCostAllRuns = Long.min(smallestCostAllRuns, smallestCost);
+        double smallestCost = bestPaths.get(0).getCost();
+        smallestCostAllRuns = Math.min(smallestCostAllRuns, smallestCost);
         totalCostAllRuns += smallestCost;
     }
 
@@ -182,7 +182,7 @@ public class GeneticAlgorithm {
             int cutIndexEnd = random.nextInt(cutIndexStart + 1, cityCount);
 
             /* Child gets recombinationGene from parent 2, e.g. child: _ _ _ 7 2 3 _*/
-            List<CityNode> parent2Sublist = parent2.getCityNodes().subList(cutIndexStart, cutIndexEnd + 1); // end exclusive
+            List<CityNode> parent2Sublist = parent2.getCityNodesTour().subList(cutIndexStart, cutIndexEnd + 1); // end exclusive
             for (int j = cutIndexStart; j <= cutIndexEnd; j++) { //child gets recombinationGene
                 child[j] = parent2.getCityNode(j);
             }
@@ -236,12 +236,12 @@ public class GeneticAlgorithm {
         int secondIndex = random.nextInt(firstIndex + 1, path.getSize());
 
         switch (mutationType) {
-            case SWAP -> Collections.swap(path.getCityNodes(), firstIndex, secondIndex);
+            case SWAP -> Collections.swap(path.getCityNodesTour(), firstIndex, secondIndex);
             case REVERSE -> {
                 for (int i = secondIndex; i <= secondIndex / 2; i++) {
-                    CityNode temp = path.getCityNodes().get(secondIndex - i); //last
-                    path.getCityNodes().set(secondIndex - i, path.getCityNodes().get(i));
-                    path.getCityNodes().set(i, temp);
+                    CityNode temp = path.getCityNodesTour().get(secondIndex - i); //last
+                    path.getCityNodesTour().set(secondIndex - i, path.getCityNodesTour().get(i));
+                    path.getCityNodesTour().set(i, temp);
                 }
             }
         }

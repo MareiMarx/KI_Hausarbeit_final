@@ -1,17 +1,17 @@
 package KI_Hausarbeit;
 
 /**
- * Stores the information for a City in a TSP problem.
+ * Stores the information for a City in a TSP problem and calculates distances between cities.
  */
 public record CityNode(String name, double latitude, double longitude) {
 
     /**
-     * Calculates the euclidean distance to another city.
+     * Calculates the great-circle distance using the Haversine formula.
      *
      * @param city the other city
      * @return distance to other city
      */
-    public long distanceToCity(CityNode city) {
+    public double distanceToCity(CityNode city) {
         double lat1 = latitude;
         double lat2 = city.latitude;
 
@@ -28,6 +28,6 @@ public record CityNode(String name, double latitude, double longitude) {
 
     @Override
     public String toString() {
-        return String.format("{%s, x=%s y=%s}", name, latitude, longitude);
+        return String.format("{%s, lat=%s lon=%s}", name, latitude, longitude);
     }
 }

@@ -11,6 +11,7 @@ public class Population {
     private double sumOfAllFitnesses;
 
     private final List<Path> paths;
+
     private int populationSize;
 
     public Population(){
@@ -58,7 +59,7 @@ public class Population {
      * @return best n Paths.
      */
     public List<Path> getBestPaths(int n){
-        paths.sort(Comparator.comparingLong(Path::getCost));
+        paths.sort(Comparator.comparingDouble(Path::getCost));
         return paths.subList(0, n+1);
     }
 

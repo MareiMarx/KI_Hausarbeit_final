@@ -1,0 +1,16 @@
+
+{	java:S120"ZRename this package name to match the regular expression '^[a-z_]+(\.[a-z_][a-z0-9_]*)*$'.(ï¨ıôşÿÿÿÿ8½…ûşû1
+b
+java:S3518i"@Make sure "tourLength" can't be zero before doing this division.(àŠ„ÿÿÿÿÿ8ñ…ûşû1
+V
+java:S3518I"9Make sure "sum" can't be zero before doing this division.(íîç±8ñ…ûşû1
+X	java:S125\"<This block of commented-out lines of code should be removed.(æî8ù…ûşû1
+X	java:S125m"<This block of commented-out lines of code should be removed.(›îŠ¤8ù…ûşû1
+I
+java:S2440‚"+Remove this instantiation of "GeonamesAPI".(Ù¤Ì8û…ûşû1
+Y	java:S125ˆ"<This block of commented-out lines of code should be removed.(€ĞÖÛ8ü…ûşû1
+^	java:S125‹"<This block of commented-out lines of code should be removed.(Ú¸ãıÿÿÿÿ8ü…ûşû1
+S
+java:S2209’"5Change this instance-reference to a static reference.(Ä—›í8ü…ûşû1
+H	java:S106–"+Replace this use of System.out by a logger.(„¶øã8ü…ûşû1
+M	java:S106›"+Replace this use of System.out by a logger.(ÿò¶¸şÿÿÿÿ8ı…ûşû1

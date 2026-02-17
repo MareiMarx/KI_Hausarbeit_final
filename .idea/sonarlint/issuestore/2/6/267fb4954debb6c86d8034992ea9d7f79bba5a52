@@ -1,0 +1,16 @@
+
+v	java:S120"ZRename this package name to match the regular expression '^[a-z_]+(\.[a-z_][a-z0-9_]*)*$'.(Ÿ‘Õµ8îº¡„ü1
+]	java:S125$"<This block of commented-out lines of code should be removed.(Õ›¥Ÿýÿÿÿÿ8ÁÂ§„ü1
+G	java:S1063"+Replace this use of System.out by a logger.(Ž¬Òˆ8Ÿ»¡„ü1
+G	java:S1065"+Replace this use of System.out by a logger.(ý°÷Ñ8 »¡„ü1
+L	java:S1067"+Replace this use of System.out by a logger.(Ø–ªùÿÿÿÿ8 »¡„ü1
+G	java:S106:"+Replace this use of System.out by a logger.(Û®÷â8 »¡„ü1
+L	java:S106c"+Replace this use of System.out by a logger.(¦¾ß…ýÿÿÿÿ8¢»¡„ü1
+L	java:S106h"+Replace this use of System.out by a logger.(³¾×Äÿÿÿÿÿ8£»¡„ü1
+G	java:S106k"+Replace this use of System.out by a logger.(ìùÝÅ8£»¡„ü1
+]	java:S125s"<This block of commented-out lines of code should be removed.(²¢ö…ùÿÿÿÿ8Úó»„ü1
+]	java:S125v"<This block of commented-out lines of code should be removed.(úû…þýÿÿÿÿ8žÚ»„ü1
+]	java:S125{"<This block of commented-out lines of code should be removed.(ÜõöØùÿÿÿÿ8¤»¡„ü1
+H	java:S106†"+Replace this use of System.out by a logger.(˜ÈÁ™8¥»¡„ü1
+L
+java:S1068"*Remove this unused "random" private field.(¡•îåþÿÿÿÿ8¥»¡„ü1

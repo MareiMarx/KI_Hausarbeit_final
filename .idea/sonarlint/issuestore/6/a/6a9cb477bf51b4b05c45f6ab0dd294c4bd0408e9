@@ -1,0 +1,15 @@
+
+m	java:S117"QRename this local variable to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(×ğó¯8šÎ¹¯û1
+n
+java:S3776"RRefactor this method to reduce its Cognitive Complexity from 19 to the 15 allowed.(ÆÎşj8ºƒà®û1
+G	java:S106""+Replace this use of System.out by a logger.(š¡Ñı8öŠŒ¯û1
+G	java:S1069"+Replace this use of System.out by a logger.(Èì‹Ş8ÆÂ£¯û1
+G	java:S106A"+Replace this use of System.out by a logger.(˜ÖĞæ8á›ª¯û1
+Z
+java:S1854U"8Remove this useless assignment to local variable "node".(Æà—üÿÿÿÿ8ùíÂ®û1
+K
+java:S1481U")Remove this unused "node" local variable.(Æà—üÿÿÿÿ8úíÂ®û1
+F
+java:S1481W")Remove this unused "edge" local variable.(ÔöÒõ8Ô¤¯û1
+]	java:S125X"<This block of commented-out lines of code should be removed.(É‚®Àúÿÿÿÿ8Ô¤¯û1
+L	java:S106["+Replace this use of System.out by a logger.(ªÓ¼áşÿÿÿÿ8ÿÎ¹¯û1

@@ -7,6 +7,7 @@ public class GeneticAlgorithm {
     public enum MutationType {
         SWAP, REVERSE
     }
+
     public enum SelectionType {
         TOURNAMENT, ROULETTE
     }
@@ -26,10 +27,44 @@ public class GeneticAlgorithm {
     private final Random random = new Random();
     private final SelectionType selectionType;
 
+    // neue Variable für die Turniergröße k
+    private final int tournamentSize;
+
     private double smallestCostAllRuns = Double.MAX_VALUE;
     private double totalCostAllRuns = 0;
 
-    public GeneticAlgorithm(CityNode[] nodes, int populationSize, int numOfGenerations, SelectionType selectionType, int mutationRate, MutationType mutationType, int elitistNumber, int recombinationRate) {
+    public GeneticAlgorithm(CityNode[] nodes,
+                            int populationSize,
+                            int numOfGenerations,
+                            SelectionType selectionType,
+                            int mutationRate,
+                            MutationType mutationType,
+                            int elitistNumber,
+                            int recombinationRate,
+                            int tournamentSize) {
+
+        if (nodes == null || nodes.length == 0) {
+            throw new IllegalArgumentException("nodes must not be null or empty");
+        }
+        if (populationSize <= 0) {
+            throw new IllegalArgumentException("populationSize must be > 0");
+        }
+        if (numOfGenerations <= 0) {
+            throw new IllegalArgumentException("numOfGenerations must be > 0");
+        }
+        if (elitistNumber < 0 || elitistNumber > populationSize) {
+            throw new IllegalArgumentException("elitistNumber must be between 0 and populationSize");
+        }
+        if (mutationRate < 0 || mutationRate > 100) {
+            throw new IllegalArgumentException("mutationRate must be between 0 and 100");
+        }
+        if (recombinationRate < 0 || recombinationRate > 100) {
+            throw new IllegalArgumentException("recombinationRate must be between 0 and 100");
+        }
+        if (selectionType == SelectionType.TOURNAMENT && (tournamentSize < 2 || tournamentSize > populationSize)) {
+            throw new IllegalArgumentException("tournamentSize must be between 2 and populationSize");
+        }
+
         this.nodes = nodes;
         this.cityCount = nodes.length;
         this.populationSize = populationSize;
@@ -40,8 +75,9 @@ public class GeneticAlgorithm {
         this.mutationType = mutationType;
         this.selectionType = selectionType;
         this.recombinationRate = recombinationRate;
+        this.tournamentSize = tournamentSize;
 
-        algorithmData = new AlgorithmData(numOfGenerations);
+        this.algorithmData = new AlgorithmData(numOfGenerations);
     }
 
     public void reset() {
@@ -54,6 +90,10 @@ public class GeneticAlgorithm {
         return smallestCostAllRuns;
     }
 
+    public double getAverageSmallestCostOfAllRuns(int numOfRuns) {
+        return totalCostAllRuns / (double) numOfRuns;
+    }
+
     public void run(boolean timebound, int numOfSeconds) {
         population.generateFirstGeneration(nodes, populationSize);
         List<Path> bestPaths = null;
@@ -61,6 +101,7 @@ public class GeneticAlgorithm {
         if (timebound) {
             int generation = 0;
             long startTime = System.currentTimeMillis();
+
             while ((System.currentTimeMillis() - startTime) / 1000 < numOfSeconds) {
                 bestPaths = runGeneration(generation++, false);
             }
@@ -70,105 +111,112 @@ public class GeneticAlgorithm {
             }
         }
 
-        double smallestCost = bestPaths.get(0).getCost();
-        smallestCostAllRuns = Math.min(smallestCostAllRuns, smallestCost);
-        totalCostAllRuns += smallestCost;
+        if (bestPaths != null && !bestPaths.isEmpty()) {
+            double smallestCost = bestPaths.get(0).getCost();
+            smallestCostAllRuns = Math.min(smallestCostAllRuns, smallestCost);
+            totalCostAllRuns += smallestCost;
+        }
     }
 
     private List<Path> runGeneration(int generation, boolean saveGenerationData) {
-        List<Path> bestPaths = population.getBestPaths(elitistNumber);
+        List<Path> elites = population.getBestPaths(elitistNumber);
+
+        Path best = population.getBestPaths(1).get(0);
         double averageCost = population.calcAverageCost();
 
         if (saveGenerationData) {
-            algorithmData.addDataForGeneration(generation, bestPaths.get(0).getCost(), averageCost);
+            algorithmData.addDataForGeneration(generation, best.getCost(), averageCost);
         }
 
         List<Path> children = recombine();
         mutate(children);
 
-        children.addAll(bestPaths);
+        children.addAll(elites);
         population = new Population(children);
 
-        return bestPaths;
+        return List.of(best);
     }
 
-    public double getAverageSmallestCostOfAllRuns(int numOfRuns) {
-        return totalCostAllRuns / (double) numOfRuns;
-    }
-
-    public void writeResults(int numOfRuns) throws Exception{
+    public void writeResults(int numOfRuns) throws Exception {
         algorithmData.writeAverageData(numOfRuns, getFilename());
     }
 
     /**
-     * Selects one Path from the current population, dependent on the {@link SelectionType} of this Algorithm.
-     * @return the selected Path
-     */
-    private Path selectionPhase() {
-            Path selectedPath = new Path();
-            switch (selectionType){
-                case ROULETTE -> selectedPath = rouletteSelection();
-                case TOURNAMENT -> selectedPath = tournamentSelection();
-            }
-            return selectedPath;
-    }
-
-    /**
-     * Selects one Parent based on probability, which calculated through fitness divided by totalFitness.
+     * Selects one Path from the current population, dependent on the SelectionType.
      *
      * @return the selected Path
      */
-    private Path rouletteSelection(){
+    private Path selectionPhase() {
+        return switch (selectionType) {
+            case ROULETTE -> rouletteSelection();
+            case TOURNAMENT -> tournamentSelection();
+        };
+    }
+
+    /**
+     * Selects one parent based on probability:
+     * fitness / totalFitness.
+     *
+     * @return the selected Path
+     */
+    private Path rouletteSelection() {
         double[] probabilities = new double[populationSize];
+        double totalFitness = population.getSumOfAllFitnesses();
 
         for (int i = 0; i < populationSize; i++) {
-            probabilities[i] = population.getPath(i).calcFitness()/ population.getSumOfAllFitnesses();
+            probabilities[i] = population.getPath(i).calcFitness() / totalFitness;
         }
+
         double spin = random.nextDouble();
 
         for (int i = 0; i < populationSize; i++) {
             spin -= probabilities[i];
-            if(spin < 0){
+            if (spin < 0) {
                 return population.getPath(i);
             }
         }
-        return population.getPath(populationSize-1);
+
+        return population.getPath(populationSize - 1);
     }
 
     /**
-     * Soft Tournament Selection, Elitist doesn't have to be picked for the recombination process.
-     * Picks two random individuals from current generation and selects the fittest one.
+     * Tournament Selection with configurable tournament size k.
+     * Randomly picks k distinct individuals from the current population
+     * and returns the fittest one.
      *
-     * @return the selected parent.
+     * @return the selected parent
      */
     private Path tournamentSelection() {
-        int firstIndex = random.nextInt(populationSize);
-        int secondIndex = random.nextInt(populationSize);
+        Path best = null;
+        Set<Integer> chosenIndices = new HashSet<>();
 
-        while (firstIndex == secondIndex) {
-            secondIndex = random.nextInt(populationSize);
+        while (chosenIndices.size() < tournamentSize) {
+            chosenIndices.add(random.nextInt(populationSize));
         }
 
-        Path first = population.getPath(firstIndex);
-        Path second = population.getPath(secondIndex);
+        for (int index : chosenIndices) {
+            Path candidate = population.getPath(index);
+            if (best == null || candidate.calcFitness() > best.calcFitness()) {
+                best = candidate;
+            }
+        }
 
-        return first.calcFitness() < second.calcFitness() ? second : first;
+        return best;
     }
 
     /**
-     * Creates a List of offspring with Order Crossover Recombination with two point cut.
+     * Creates offspring using Order Crossover with two cut points.
      *
-     * @return List of generated offspring
+     * @return list of generated offspring
      */
     private List<Path> recombine() {
         List<Path> nextPopulation = new ArrayList<>();
-        boolean crossOver;
-        Path childPath;
-        for (int i = 0; i < populationSize - elitistNumber; i++) {
 
-            /* Choose if crossover should happen */
-            crossOver = random.nextInt(0, 100) <= recombinationRate;
+        for (int i = 0; i < populationSize - elitistNumber; i++) {
+            boolean crossOver = random.nextInt(100) < recombinationRate;
+
             Path parent1 = selectionPhase();
+
             if (!crossOver) {
                 nextPopulation.add(parent1);
                 continue;
@@ -177,31 +225,31 @@ public class GeneticAlgorithm {
             Path parent2 = selectionPhase();
             CityNode[] child = new CityNode[cityCount];
 
-            /* random cutting points */
             int cutIndexStart = random.nextInt(cityCount - 1);
             int cutIndexEnd = random.nextInt(cutIndexStart + 1, cityCount);
 
-            /* Child gets recombinationGene from parent 2, e.g. child: _ _ _ 7 2 3 _*/
-            List<CityNode> parent2Sublist = parent2.getCityNodesTour().subList(cutIndexStart, cutIndexEnd + 1); // end exclusive
-            for (int j = cutIndexStart; j <= cutIndexEnd; j++) { //child gets recombinationGene
+            List<CityNode> parent2Sublist =
+                    parent2.getCityNodesTour().subList(cutIndexStart, cutIndexEnd + 1);
+
+            for (int j = cutIndexStart; j <= cutIndexEnd; j++) {
                 child[j] = parent2.getCityNode(j);
             }
 
-            /* Child gets remaining nodes from parent 1, starting at the end index, e.g. _ _ _ 7 2 3 1
-             *  to preserve the parent's order of nodes */
-            int indexChild = cutIndexEnd == cityCount - 1 ? 0 : cutIndexEnd + 1;
-            int indexParent = cutIndexEnd == cityCount - 1 ? 0 : cutIndexEnd + 1;
-            while (indexChild < cutIndexStart || indexChild > cutIndexEnd) {
+            int indexChild = (cutIndexEnd == cityCount - 1) ? 0 : cutIndexEnd + 1;
+            int indexParent = (cutIndexEnd == cityCount - 1) ? 0 : cutIndexEnd + 1;
 
+            while (indexChild < cutIndexStart || indexChild > cutIndexEnd) {
                 CityNode nodeParent1 = parent1.getCityNode(indexParent);
+
                 if (!parent2Sublist.contains(nodeParent1)) {
                     child[indexChild] = nodeParent1;
-                    indexChild = (indexChild + 1) % cityCount; //if cityCound is reached, switch to 0
+                    indexChild = (indexChild + 1) % cityCount;
                 }
+
                 indexParent = (indexParent + 1) % cityCount;
             }
-            childPath = new Path(new ArrayList<>(Arrays.stream(child).toList()));
 
+            Path childPath = new Path(new ArrayList<>(Arrays.stream(child).toList()));
             nextPopulation.add(childPath);
         }
 
@@ -209,27 +257,23 @@ public class GeneticAlgorithm {
     }
 
     /**
-     * Mutates a number of children depending on mutation rate and recalculates their cost of path.
+     * Mutates children depending on mutation rate and recalculates path cost.
      *
      * @param paths children to mutate
      */
     private void mutate(List<Path> paths) {
-        for (int i = 0; i < paths.size(); i++) {
-
-            int rand = random.nextInt(0, 100);
-
-            if (rand < mutationRate) {
-                int index = random.nextInt(paths.size());
-                mutate(paths.get(index));
-                paths.get(index).calcCost();
+        for (Path p : paths) {
+            if (random.nextInt(100) < mutationRate) {
+                mutate(p);
+                p.calcCost();
             }
         }
     }
 
     /**
-     * Inverts a sub-sequence of the child
+     * Mutates one path.
      *
-     * @param path the child which is supposed to mutate
+     * @param path the child to mutate
      */
     private void mutate(Path path) {
         int firstIndex = random.nextInt(path.getSize() - 1);
@@ -237,15 +281,19 @@ public class GeneticAlgorithm {
 
         switch (mutationType) {
             case SWAP -> Collections.swap(path.getCityNodesTour(), firstIndex, secondIndex);
+
             case REVERSE -> {
-                for (int i = secondIndex; i <= secondIndex / 2; i++) {
-                    CityNode temp = path.getCityNodesTour().get(secondIndex - i); //last
-                    path.getCityNodesTour().set(secondIndex - i, path.getCityNodesTour().get(i));
-                    path.getCityNodesTour().set(i, temp);
+                List<CityNode> tour = path.getCityNodesTour();
+                int i = firstIndex;
+                int j = secondIndex;
+
+                while (i < j) {
+                    Collections.swap(tour, i, j);
+                    i++;
+                    j--;
                 }
             }
         }
-
     }
 
     private void log(double maxFitness, double averageFitness) {
@@ -259,6 +307,7 @@ public class GeneticAlgorithm {
                 ",mutationRate=" + mutationRate +
                 ",mutationType=" + mutationType +
                 ",recombinationRate=" + recombinationRate +
-                ",selectionType=" + selectionType;
+                ",selectionType=" + selectionType +
+                ",tournamentSize=" + tournamentSize;
     }
 }

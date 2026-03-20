@@ -7,26 +7,30 @@ import java.util.List;
 
 public class Population {
     private double sumOfAllPathLength;
-
     private double sumOfAllFitnesses;
 
     private final List<Path> paths;
 
-    private int populationSize;
-
-    public Population(){
-        paths = new ArrayList<>();
+    public Population() {
+        this.paths = new ArrayList<>();
+        this.sumOfAllPathLength = 0;
+        this.sumOfAllFitnesses = 0;
     }
 
-    public Population(List<Path> paths){
-        this.paths = paths;
-        sumOfAllPathLength = paths.stream().mapToDouble(Path::getCost).sum();
-        populationSize = paths.size();
-        sumOfAllFitnesses = paths.stream().mapToDouble(Path::calcFitness).sum();
+    public Population(List<Path> paths) {
+        this.paths = new ArrayList<>(paths); // defensive copy
+        recalcSums();
     }
 
-    public void generateFirstGeneration(CityNode[] cityNodes, int populationSize){
-        this.populationSize = populationSize;
+    public int getSize() {
+        return paths.size();
+    }
+
+    public void generateFirstGeneration(CityNode[] cityNodes, int populationSize) {
+        paths.clear();
+        sumOfAllPathLength = 0;
+        sumOfAllFitnesses = 0;
+
         for (int i = 0; i < populationSize; i++) {
             List<CityNode> cityNodesCopy = new ArrayList<>(List.of(cityNodes));
             Collections.shuffle(cityNodesCopy);
@@ -36,34 +40,36 @@ public class Population {
     }
 
     /**
-     * Adds a Path to this population and adds its costOfPath to the totalCostOfPath of this Population.
-     * @param path the path to add
+     * Adds a Path to this population and updates cached sums.
      */
-    private void addPath(Path path){
-        sumOfAllPathLength += path.getCost();
+    private void addPath(Path path) {
         paths.add(path);
+        sumOfAllPathLength += path.getCost();
         sumOfAllFitnesses += path.calcFitness();
     }
 
     /**
      * Calculates the average Path Cost of this Population.
-     * @return average cost of path
      */
-    public double calcAverageCost(){
-        return sumOfAllPathLength / populationSize;
+    public double calcAverageCost() {
+        if (paths.isEmpty()) return 0;
+        return sumOfAllPathLength / paths.size();
     }
 
     /**
-     * Returns the best Paths of this population by sorting and returning the n first.
-     * @param n number of Individuals to return
-     * @return best n Paths.
+     * Returns the best n Paths of this population (lowest cost).
+     * Does NOT reorder the population permanently.
      */
-    public List<Path> getBestPaths(int n){
-        paths.sort(Comparator.comparingDouble(Path::getCost));
-        return paths.subList(0, n+1);
+    public List<Path> getBestPaths(int n) {
+        if (n <= 0) return List.of();
+        n = Math.min(n, paths.size());
+
+        List<Path> copy = new ArrayList<>(paths);
+        copy.sort(Comparator.comparingDouble(Path::getCost));
+        return copy.subList(0, n);
     }
 
-    public Path getPath(int index){
+    public Path getPath(int index) {
         return paths.get(index);
     }
 
@@ -71,4 +77,16 @@ public class Population {
         return sumOfAllFitnesses;
     }
 
+    /**
+     * Recalculates cached sums (useful if you ever change paths in-place).
+     */
+    private void recalcSums() {
+        sumOfAllPathLength = 0;
+        sumOfAllFitnesses = 0;
+
+        for (Path p : paths) {
+            sumOfAllPathLength += p.getCost();
+            sumOfAllFitnesses += p.calcFitness();
+        }
+    }
 }
